@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>デイサービス 送迎表</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1a5276;
+      --primary-light: #d6eaf8;
+      --success: #1a8c4e;
+      --danger: #c0392b;
+      --warn: #e67e22;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      min-height: 100vh;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .app-header h1 { font-size: 1rem; font-weight: 700; }
+    .app-header .subtitle { font-size: 0.72rem; opacity: 0.8; margin-top: 2px; }
+    .header-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .header-btn:hover { background: rgba(255,255,255,0.3); }
+
+    /* ── Pages ── */
+    .page { display: none; padding-bottom: 80px; }
+    .page.active { display: block; }
+
+    /* ── Bottom Nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #fff;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      z-index: 200;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    }
+    .nav-item {
+      flex: 1;
+      padding: 7px 0 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.62rem;
+      color: #aaa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 1.2rem; line-height: 1; }
+
+    /* ── Date strip ── */
+    .date-strip {
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: sticky;
+      top: 52px;
+      z-index: 100;
+    }
+    .date-strip label { font-size: 0.78rem; color: #666; white-space: nowrap; }
+    .date-strip input[type="date"] {
+      padding: 5px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.88rem;
+    }
+    .period-toggle {
+      display: flex;
+      border: 1.5px solid var(--primary);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-left: auto;
+    }
+    .period-btn {
+      padding: 5px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: var(--primary);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .period-btn.active { background: var(--primary); color: #fff; }
+
+    /* ── Attendance bar ── */
+    /* ── Attendance list ── */
+    .attendance-bar {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .attendance-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .attendance-header-left { font-size: 0.8rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+    .attendance-toggle-icon { font-size: 0.7rem; color: #aaa; }
+    .attendance-list { display: none; border-top: 1px solid #f0f0f0; }
+    .attendance-list.open { display: block; }
+    .attendance-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-bottom: 1px solid #f8f8f8;
+      gap: 10px;
+    }
+    .attendance-row:last-child { border-bottom: none; }
+    .attendance-name { flex: 1; font-size: 0.88rem; font-weight: 600; }
+    .attendance-role { font-size: 0.7rem; color: #aaa; margin-top: 1px; }
+    .absence-btn {
+      border: none;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .absence-btn.present { background: #eaf7ef; color: #1a8c4e; }
+    .absence-btn.absent  { background: #fde8e8; color: var(--danger); }
+
+    /* ── Vehicle tabs ── */
+    .vehicle-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      overflow-x: auto;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      scrollbar-width: none;
+    }
+    .vehicle-tabs::-webkit-scrollbar { display: none; }
+    .vehicle-tab {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      background: #f4f6f9;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    /* ── Vehicle info bar ── */
+    .vehicle-info-bar {
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      color: #555;
+      background: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .vehicle-info-bar .role { display: flex; align-items: center; gap: 4px; }
+    .role-label { color: #999; font-size: 0.72rem; }
+    .absent-warn { color: var(--warn); font-size: 0.72rem; }
+
+    /* ── Schedule list ── */
+    .schedule-list { padding: 10px 12px; }
+
+    .schedule-item {
+      background: #fff;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-left: 4px solid #ccc;
+      overflow: hidden;
+    }
+    .item-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 10px;
+      gap: 8px;
+    }
+    .order-badge {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.82rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; gap: 4px; }
+    .item-address { font-size: 0.72rem; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-times { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+    .time-group { text-align: center; }
+    .time-label { font-size: 0.62rem; color: #999; display: block; margin-bottom: 1px; }
+    .time-val { font-size: 0.88rem; font-weight: 600; }
+    .time-val.actual { color: var(--success); }
+    .time-val.empty  { color: #ccc; }
+
+    .item-actions {
+      display: flex;
+      border-top: 1px solid #f0f0f0;
+      padding: 3px 6px;
+      gap: 2px;
+      align-items: center;
+    }
+    .act-btn {
+      padding: 3px 7px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.74rem;
+      color: #666;
+      border-radius: 4px;
+    }
+    .act-btn:hover { background: #f0f0f0; }
+    .act-btn.danger { color: var(--danger); }
+    .act-btn:disabled { opacity: 0.3; cursor: default; }
+    .item-note { flex: 1; font-size: 0.72rem; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
+
+    /* ── Add / Copy buttons ── */
+    .add-user-btn {
+      width: 100%;
+      padding: 12px;
+      background: #fff;
+      border: 2px dashed #b3d4f0;
+      border-radius: 10px;
+      color: var(--primary);
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+    .add-user-btn:hover { background: var(--primary-light); }
+    .copy-btn {
+      width: 100%;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid #c8dff0;
+      border-radius: 8px;
+      color: var(--primary);
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin: 0 12px 8px;
+      width: calc(100% - 24px);
+    }
+    .copy-btn:hover { background: var(--primary-light); }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 36px 16px; color: #aaa; }
+    .empty-icon { font-size: 2.8rem; margin-bottom: 10px; }
+
+    /* ── Master pages ── */
+    .section-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin: 12px;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 13px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title { font-weight: 700; font-size: 0.92rem; color: var(--primary); }
+
+    /* vehicle cards on vehicle page */
+    .vehicle-card {
+      margin: 12px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      overflow: hidden;
+      border-left: 5px solid #ccc;
+    }
+    .vehicle-card-header {
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .vehicle-card-name { font-weight: 700; font-size: 1rem; }
+    .vehicle-card-body {
+      padding: 0 14px 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .vehicle-role-item {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .vehicle-role-label { font-size: 0.68rem; color: #999; margin-bottom: 3px; }
+    .vehicle-role-name  { font-size: 0.88rem; font-weight: 600; }
+    .vehicle-role-name.empty { color: #ccc; font-weight: 400; }
+
+    .list-item {
+      padding: 11px 14px;
+      border-bottom: 1px solid #f8f8f8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .list-item-info { flex: 1; min-width: 0; }
+    .list-item-name { font-weight: 600; font-size: 0.88rem; }
+    .list-item-sub  { font-size: 0.72rem; color: #888; margin-top: 2px; }
+    .list-item-actions { display: flex; gap: 4px; }
+    .btn-sm {
+      padding: 4px 9px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .btn-edit   { background: #eaf4fd; color: var(--primary); }
+    .btn-delete { background: #fde8e8; color: var(--danger); }
+
+    .add-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 6px 13px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .add-btn:hover { background: #154360; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 500;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 22px 18px 32px;
+    }
+    @media (min-width: 600px) {
+      .modal-overlay { align-items: center; }
+      .modal { border-radius: 16px; max-height: 80vh; }
+    }
+    .modal-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 18px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      font-size: 0.88rem;
+      background: #fafafa;
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); background: #fff; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+    .btn-primary {
+      flex: 1;
+      padding: 11px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-cancel {
+      padding: 11px 18px;
+      background: #f0f0f0;
+      color: #666;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    /* ── User select modal ── */
+    .user-select-list {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+    .user-select-item {
+      padding: 10px 13px;
+      border-bottom: 1px solid #f4f4f4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .user-select-item:last-child { border-bottom: none; }
+    .user-select-item:hover { background: #f8f8f8; }
+    .user-select-item input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--primary); flex-shrink: 0; }
+    .user-select-name { font-weight: 600; font-size: 0.88rem; }
+    .user-select-sub  { font-size: 0.72rem; color: #888; }
+
+    /* ── Color picker ── */
+    .color-options { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .color-option {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .color-option.selected { border-color: #222; }
+
+    /* ── All-vehicles view ── */
+    .all-section { margin-bottom: 14px; }
+    .all-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 8px 8px 0 0;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .all-section-empty {
+      background: #fff;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #eee;
+      border-top: none;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: #bbb;
+    }
+    .all-item {
+      background: #fff;
+      border-bottom: 1px solid #f4f4f4;
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      gap: 10px;
+    }
+    .all-item:last-child { border-bottom: none; border-radius: 0 0 8px 8px; }
+    .all-item-order {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .all-item-name { flex: 1; font-size: 0.88rem; font-weight: 600; }
+    .all-item-address { font-size: 0.72rem; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+    .all-item-times { display: flex; gap: 8px; flex-shrink: 0; }
+    .all-time { text-align: center; }
+    .all-time-label { font-size: 0.6rem; color: #bbb; display: block; }
+    .all-time-val { font-size: 0.8rem; font-weight: 600; }
+    .all-time-val.actual { color: var(--success); }
+    .all-time-val.empty  { color: #ddd; }
+
+    /* ── Print ── */
+    @media print {
+      .app-header .header-btn, .bottom-nav, .date-strip input[type="date"],
+      .period-toggle, .vehicle-tabs, .attendance-bar,
+      .item-actions, .add-user-btn, .copy-btn { display: none !important; }
+      body { background: #fff; }
+      .app-header { background: #1a5276 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page { display: block !important; padding: 0; }
+      .schedule-item { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; border-left-width: 4px; margin-bottom: 4px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .order-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ Header ══ -->
+<header class="app-header">
+  <div>
+    <h1>デイサービス 送迎表</h1>
+    <div class="subtitle" id="header-date"></div>
+  </div>
+  <button class="header-btn" onclick="window.print()">🖨 印刷</button>
+</header>
+
+<!-- ══ 送迎表 ══ -->
+<div class="page active" id="page-schedule">
+  <div class="date-strip">
+    <label for="date-picker">日付</label>
+    <input type="date" id="date-picker" onchange="onDateChange()">
+    <div class="period-toggle">
+      <button class="period-btn active" id="btn-morning"   onclick="setPeriod('morning')">午前（お迎え）</button>
+      <button class="period-btn"        id="btn-afternoon" onclick="setPeriod('afternoon')">午後（お送り）</button>
+    </div>
+  </div>
+  <div class="attendance-bar" id="attendance-bar">
+    <div class="attendance-header" onclick="toggleAttendanceList()">
+      <span class="attendance-header-left">
+        <span id="attendance-summary"></span>
+      </span>
+      <span class="attendance-toggle-icon" id="attendance-toggle-icon">▼</span>
+    </div>
+    <div class="attendance-list" id="attendance-list"></div>
+  </div>
+  <div class="vehicle-tabs" id="vehicle-tabs"></div>
+  <div class="vehicle-info-bar" id="vehicle-info-bar"></div>
+  <div id="schedule-list-container"></div>
+</div>
+
+<!-- ══ 利用者 ══ -->
+<div class="page" id="page-users">
+  <div class="section-card" style="margin-top:14px;">
+    <div class="section-header">
+      <span class="section-title">利用者一覧</span>
+      <button class="add-btn" onclick="openUserModal()">＋ 追加</button>
+    </div>
+    <div id="user-list"></div>
+  </div>
+</div>
+
+<!-- ══ 車両 ══ -->
+<div class="page" id="page-vehicles">
+  <div style="padding:14px 0 0;">
+    <div style="display:flex; justify-content:flex-end; padding:0 12px 8px;">
+      <button class="add-btn" onclick="openVehicleModal()">＋ 車両を追加</button>
+    </div>
+    <div id="vehicle-list"></div>
+  </div>
+</div>
+
+<!-- ══ スタッフ ══ -->
+<div class="page" id="page-staff">
+  <div class="section-card" style="margin-top:14px;">
+    <div class="section-header">
+      <span class="section-title">スタッフ一覧</span>
+      <button class="add-btn" onclick="openStaffModal()">＋ 追加</button>
+    </div>
+    <div id="staff-list"></div>
+  </div>
+</div>
+
+<!-- ══ Bottom Nav ══ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-schedule" onclick="showPage('schedule')">
+    <span class="nav-icon">🚐</span>送迎表
+  </button>
+  <button class="nav-item" id="nav-users" onclick="showPage('users')">
+    <span class="nav-icon">👥</span>利用者
+  </button>
+  <button class="nav-item" id="nav-vehicles" onclick="showPage('vehicles')">
+    <span class="nav-icon">🚗</span>車両
+  </button>
+  <button class="nav-item" id="nav-staff" onclick="showPage('staff')">
+    <span class="nav-icon">👤</span>スタッフ
+  </button>
+</nav>
+
+<!-- ══ Modal: 利用者 ══ -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <div class="modal-title" id="modal-user-title">利用者を追加</div>
+    <input type="hidden" id="edit-user-id">
+    <div class="form-group">
+      <label>氏名 <span style="color:red">*</span></label>
+      <input type="text" id="user-name" placeholder="山田 花子">
+    </div>
+    <div class="form-group">
+      <label>住所</label>
+      <input type="text" id="user-address" placeholder="○○市○○町1-2-3">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>電話番号</label>
+        <input type="tel" id="user-phone" placeholder="090-0000-0000">
+      </div>
+      <div class="form-group">
+        <label>担当車両（初期値）</label>
+        <select id="user-default-vehicle"><option value="">未設定</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>迎え 予定時刻（午前）</label>
+        <input type="time" id="user-default-pickup">
+      </div>
+      <div class="form-group">
+        <label>送り 予定時刻（午後）</label>
+        <input type="time" id="user-default-dropoff">
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+        <input type="checkbox" id="user-wheelchair" style="width:18px;height:18px;accent-color:var(--primary);">
+        ♿ 車椅子の方
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-user')">キャンセル</button>
+      <button class="btn-primary" onclick="saveUser()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: 車両 ══ -->
+<div class="modal-overlay" id="modal-vehicle">
+  <div class="modal">
+    <div class="modal-title" id="modal-vehicle-title">車両を追加</div>
+    <input type="hidden" id="edit-vehicle-id">
+    <div class="form-group">
+      <label>車両名 <span style="color:red">*</span></label>
+      <input type="text" id="vehicle-name" placeholder="1号車">
+    </div>
+    <div class="form-group">
+      <label>カラー</label>
+      <div class="color-options" id="color-options"></div>
+      <input type="hidden" id="vehicle-color" value="#2980b9">
+    </div>
+    <div id="staff-notice" style="display:none;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px;font-size:0.8rem;color:#7a6000;margin-bottom:10px;">
+      👤 スタッフが未登録です。下の欄に名前を入力するか、先に「スタッフ」タブで登録してください。
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>ドライバー</label>
+        <select id="vehicle-driver"><option value="">未設定</option></select>
+        <input type="text" id="vehicle-driver-new" placeholder="新規：名前を入力" style="margin-top:6px;width:100%;padding:8px 10px;border:1px dashed #aaa;border-radius:7px;font-size:0.85rem;display:none;">
+      </div>
+      <div class="form-group">
+        <label>同乗スタッフ</label>
+        <select id="vehicle-staff"><option value="">未設定</option></select>
+        <input type="text" id="vehicle-staff-new" placeholder="新規：名前を入力" style="margin-top:6px;width:100%;padding:8px 10px;border:1px dashed #aaa;border-radius:7px;font-size:0.85rem;display:none;">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>メモ</label>
+      <input type="text" id="vehicle-note" placeholder="例：福祉車両">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-vehicle')">キャンセル</button>
+      <button class="btn-primary" onclick="saveVehicle()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: スタッフ ══ -->
+<div class="modal-overlay" id="modal-staff">
+  <div class="modal">
+    <div class="modal-title" id="modal-staff-title">スタッフを追加</div>
+    <input type="hidden" id="edit-staff-id">
+    <div class="form-group">
+      <label>氏名 <span style="color:red">*</span></label>
+      <input type="text" id="staff-name" placeholder="田中 太郎">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-staff')">キャンセル</button>
+      <button class="btn-primary" onclick="saveStaff()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: 利用者を送迎表に追加 ══ -->
+<div class="modal-overlay" id="modal-add-to-schedule">
+  <div class="modal">
+    <div class="modal-title" id="modal-add-title">利用者を追加</div>
+    <p style="font-size:0.8rem;color:#888;margin-bottom:10px;">本日の送迎に追加する利用者を選択してください</p>
+    <div class="user-select-list" id="user-select-list"></div>
+    <div id="also-return-wrap" style="margin-top:12px;padding:10px 12px;background:#f8f9fa;border-radius:8px;display:none;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--primary);">
+        <input type="checkbox" id="also-return" style="width:17px;height:17px;accent-color:var(--primary);">
+        <span id="also-return-label">帰り（午後）にも同じ利用者を追加する</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-add-to-schedule')">キャンセル</button>
+      <button class="btn-primary" onclick="addSelectedUsers()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: 時刻・メモ ══ -->
+<div class="modal-overlay" id="modal-time-edit">
+  <div class="modal">
+    <div class="modal-title" id="modal-time-title">時刻・メモを編集</div>
+    <input type="hidden" id="edit-time-key">
+    <div class="form-row">
+      <div class="form-group">
+        <label>予定時刻</label>
+        <input type="time" id="edit-scheduled-time">
+      </div>
+      <div class="form-group">
+        <label>実績時刻</label>
+        <input type="time" id="edit-actual-time">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>メモ</label>
+      <input type="text" id="edit-note" placeholder="例：玄関前で待機">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('modal-time-edit')">キャンセル</button>
+      <button class="btn-primary" onclick="saveTimeEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Modal: ルート最適化 ══ -->
+<div class="modal-overlay" id="modal-route">
+  <div class="modal">
+    <div class="modal-title">🗺️ ルート最適化</div>
+
+    <!-- 設定パネル -->
+    <div id="route-setup">
+      <div class="form-group">
+        <label>施設の住所</label>
+        <input type="text" id="facility-address" placeholder="例：大阪府大阪市○○区○○町1-1">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>出発時刻（施設を出る時間）</label>
+          <input type="time" id="route-depart">
+        </div>
+        <div class="form-group">
+          <label>施設着予定時刻</label>
+          <input type="time" id="route-arrive">
+        </div>
+      </div>
+      <p style="font-size:0.78rem;color:#888;line-height:1.5;">住所を地図で検索して近い順に並べ替えます。<br>インターネット接続が必要です（無料）。</p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('modal-route')">キャンセル</button>
+        <button class="btn-primary" onclick="startRouteOptimize()">最適化を開始</button>
+      </div>
+    </div>
+
+    <!-- 進捗パネル -->
+    <div id="route-progress" style="display:none;text-align:center;padding:10px 0 20px;">
+      <div style="font-size:2.2rem;margin-bottom:10px;">🔍</div>
+      <div id="route-progress-text" style="font-size:0.88rem;color:#555;margin-bottom:14px;">準備中...</div>
+      <div style="background:#eee;border-radius:4px;height:8px;overflow:hidden;">
+        <div id="route-progress-bar" style="background:var(--primary);height:8px;width:0%;transition:width 0.4s;"></div>
+      </div>
+    </div>
+
+    <!-- 結果パネル -->
+    <div id="route-result" style="display:none;">
+      <p style="font-size:0.8rem;color:#666;margin-bottom:10px;">この順番に並べ替えます。確認して確定してください。</p>
+      <div id="route-result-list"></div>
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn-cancel" onclick="closeModal('modal-route')">キャンセル</button>
+        <button class="btn-primary" onclick="applyRoute()">この順番で確定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// Constants
+// ================================================================
+const STORAGE_KEY = 'sougei_v2';
+const COLORS = ['#2980b9','#27ae60','#8e44ad','#e67e22','#c0392b','#16a085','#2c3e50','#d35400'];
+
+function defaultData() {
+  return { vehicles: [], users: [], staff: [], absences: {}, schedules: {}, geocache: {}, settings: {} };
+}
+
+// ================================================================
+// Data
+// ================================================================
+let data = (() => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultData(); }
+  catch { return defaultData(); }
+})();
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+// ================================================================
+// State
+// ================================================================
+let curPage    = 'schedule';
+let curDate    = todayStr();
+let curVehicle = null;
+let curPeriod  = 'morning';
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ================================================================
+// Navigation
+// ================================================================
+function showPage(page) {
+  curPage = page;
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-'  + page).classList.add('active');
+  if (page === 'schedule') renderSchedulePage();
+  if (page === 'users')    renderUsersPage();
+  if (page === 'vehicles') renderVehiclesPage();
+  if (page === 'staff')    renderStaffPage();
+}
+
+// ================================================================
+// Schedule Page
+// ================================================================
+function onDateChange() {
+  curDate = document.getElementById('date-picker').value;
+  updateHeaderDate();
+  renderSchedulePage();
+}
+
+function setPeriod(p) {
+  curPeriod = p;
+  document.getElementById('btn-morning').classList.toggle('active', p === 'morning');
+  document.getElementById('btn-afternoon').classList.toggle('active', p === 'afternoon');
+  applyPeriodTheme(p);
+  renderScheduleList();
+}
+
+function applyPeriodTheme(p) {
+  const root = document.documentElement;
+  if (p === 'afternoon') {
+    root.style.setProperty('--primary',       '#b5547a');
+    root.style.setProperty('--primary-light',  '#fce4ec');
+    document.body.style.background            = '#fef5f8';
+    document.querySelector('.app-header').style.background = '#f48fb1';
+    document.querySelector('.date-strip').style.borderBottomColor = '#f8d7e5';
+    document.querySelector('.period-toggle').style.borderColor    = '#f48fb1';
+  } else {
+    root.style.setProperty('--primary',       '#1a5276');
+    root.style.setProperty('--primary-light',  '#d6eaf8');
+    document.body.style.background            = '#f0f4f8';
+    document.querySelector('.app-header').style.background = '#1a5276';
+    document.querySelector('.date-strip').style.borderBottomColor = '#e0e0e0';
+    document.querySelector('.period-toggle').style.borderColor    = '#1a5276';
+  }
+}
+
+function schedKey() { return curDate + '.' + curPeriod + '.' + curVehicle; }
+function getItems()  { return data.schedules[schedKey()] || []; }
+function ensureItems() {
+  const k = schedKey();
+  if (!data.schedules[k]) data.schedules[k] = [];
+  return data.schedules[k];
+}
+
+function isAbsent(staffId) {
+  if (!staffId) return false;
+  const abs = data.absences[curDate] || [];
+  return abs.includes(staffId);
+}
+
+function renderSchedulePage() {
+  renderVehicleTabs();
+  renderAttendanceBar();
+  renderVehicleInfoBar();
+  renderScheduleList();
+}
+
+// ── 出欠リスト ──
+let attendanceOpen = false;
+
+function toggleAttendanceList() {
+  attendanceOpen = !attendanceOpen;
+  document.getElementById('attendance-list').classList.toggle('open', attendanceOpen);
+  document.getElementById('attendance-toggle-icon').textContent = attendanceOpen ? '▲' : '▼';
+}
+
+function renderAttendanceBar() {
+  if (data.staff.length === 0) {
+    document.getElementById('attendance-bar').style.display = 'none';
+    return;
+  }
+  document.getElementById('attendance-bar').style.display = '';
+
+  const abs       = data.absences[curDate] || [];
+  const driverIds = new Set(data.vehicles.map(v => v.driverId).filter(Boolean));
+  const staffIds  = new Set(data.vehicles.map(v => v.staffId).filter(Boolean));
+  const absentCount = data.staff.filter(s => abs.includes(s.id)).length;
+
+  // サマリー（ヘッダー）
+  const summaryEl = document.getElementById('attendance-summary');
+  if (absentCount === 0) {
+    summaryEl.innerHTML = '👥 出欠　<span style="color:#1a8c4e;font-size:0.78rem;">全員出勤</span>';
+  } else {
+    const names = data.staff.filter(s => abs.includes(s.id)).map(s => esc(s.name)).join('・');
+    summaryEl.innerHTML = `👥 出欠　<span style="color:var(--danger);font-size:0.78rem;">🌙 休み：${names}</span>`;
+  }
+
+  // リスト
+  document.getElementById('attendance-list').innerHTML = data.staff.map(s => {
+    const absent   = abs.includes(s.id);
+    const isDriver = driverIds.has(s.id);
+    const isStaff  = staffIds.has(s.id);
+    const roleVeh  = data.vehicles.find(v => v.driverId === s.id || v.staffId === s.id);
+    const roleLabel = isDriver
+      ? `🚗 ドライバー（${esc(roleVeh?.name || '')}）`
+      : isStaff
+        ? `👤 スタッフ（${esc(roleVeh?.name || '')}）`
+        : '未配車';
+    return `
+      <div class="attendance-row">
+        <div>
+          <div class="attendance-name" style="${absent ? 'text-decoration:line-through;color:#aaa;' : ''}">${esc(s.name)}</div>
+          <div class="attendance-role">${roleLabel}</div>
+        </div>
+        <button class="absence-btn ${absent ? 'absent' : 'present'}" onclick="toggleAbsence('${s.id}')">
+          ${absent ? '🌙 休み' : '　出勤　'}
+        </button>
+      </div>`;
+  }).join('');
+
+  // リストの開閉状態を維持
+  document.getElementById('attendance-list').classList.toggle('open', attendanceOpen);
+  document.getElementById('attendance-toggle-icon').textContent = attendanceOpen ? '▲' : '▼';
+}
+
+function toggleAbsence(staffId) {
+  if (!data.absences[curDate]) data.absences[curDate] = [];
+  const abs = data.absences[curDate];
+  const idx = abs.indexOf(staffId);
+  if (idx >= 0) abs.splice(idx, 1); else abs.push(staffId);
+  save();
+  renderAttendanceBar();
+  renderVehicleInfoBar();
+}
+
+// ── 車両タブ ──
+function renderVehicleTabs() {
+  const container = document.getElementById('vehicle-tabs');
+  // 全車両タブは常に表示
+  if (!curVehicle || (curVehicle !== 'all' && !data.vehicles.find(v => v.id === curVehicle))) {
+    curVehicle = 'all';
+  }
+  const allActive = curVehicle === 'all';
+  const allTab = `<button class="vehicle-tab"
+    style="border:1px solid #eee;background:${allActive?'#ececec':'#f9f9f9'};color:#666;font-weight:${allActive?'700':'400'};"
+    onclick="selectVehicle('all')">📋 全車両</button>`;
+  const vehicleTabs = data.vehicles.map(v => {
+    const active       = v.id === curVehicle;
+    const driver       = data.staff.find(s => s.id === v.driverId);
+    const driverAbsent = v.driverId && isAbsent(v.driverId);
+    const bg           = active ? '#ececec' : '#f9f9f9';
+    const fontWeight   = active ? '700' : '400';
+
+    let driverLine = '';
+    if (driver) {
+      driverLine = driverAbsent
+        ? `<div style="font-size:0.62rem;font-weight:600;margin-top:1px;color:#e57373;">⚠️ ${esc(driver.name)} 欠勤</div>`
+        : `<div style="font-size:0.62rem;margin-top:1px;color:#bbb;">🚗 ${esc(driver.name)}</div>`;
+    } else {
+      driverLine = `<div style="font-size:0.62rem;margin-top:1px;color:#ccc;">Dr: 未設定</div>`;
+    }
+
+    return `<button class="vehicle-tab"
+      style="border:1px solid #eee;background:${bg};color:#555;font-weight:${fontWeight};padding:5px 12px;line-height:1.2;text-align:left;"
+      onclick="selectVehicle('${v.id}')">
+        <div>${esc(v.name)}</div>
+        ${driverLine}
+      </button>`;
+  }).join('');
+  container.innerHTML = allTab + vehicleTabs;
+}
+
+function selectVehicle(vid) {
+  curVehicle = vid;
+  renderVehicleTabs();
+  renderVehicleInfoBar();
+  renderScheduleList();
+}
+
+// ── 車両情報バー（ドライバー・スタッフ＋欠席警告） ──
+function renderVehicleInfoBar() {
+  const bar = document.getElementById('vehicle-info-bar');
+  if (curVehicle === 'all') { bar.innerHTML = ''; return; }
+  const v = data.vehicles.find(v => v.id === curVehicle);
+  if (!v) { bar.innerHTML = ''; return; }
+
+  const driver = data.staff.find(s => s.id === v.driverId);
+  const staff  = data.staff.find(s => s.id === v.staffId);
+
+  const driverAbsent = isAbsent(v.driverId);
+  const staffAbsent  = isAbsent(v.staffId);
+
+  const driverHtml = driver
+    ? `<span>${esc(driver.name)}</span>${driverAbsent ? '<span class="absent-warn">⚠️ 欠勤</span>' : ''}`
+    : '<span style="color:#ccc;">未設定</span>';
+  const staffHtml = staff
+    ? `<span>${esc(staff.name)}</span>${staffAbsent ? '<span class="absent-warn">⚠️ 欠勤</span>' : ''}`
+    : '<span style="color:#ccc;">未設定</span>';
+
+  bar.innerHTML = `
+    <div class="role"><span class="role-label">ドライバー</span>&nbsp;${driverHtml}</div>
+    <div class="role"><span class="role-label">スタッフ</span>&nbsp;${staffHtml}</div>
+    ${v.note ? `<div style="color:#aaa;font-size:0.72rem;">${esc(v.note)}</div>` : ''}`;
+}
+
+// ── スケジュールリスト ──
+function renderScheduleList() {
+  const container = document.getElementById('schedule-list-container');
+  if (data.vehicles.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🚗</div><p>「車両」タブから車両を登録してください</p></div>`;
+    return;
+  }
+
+  if (curVehicle === 'all') { renderAllVehicles(container); return; }
+
+  const vehicle = data.vehicles.find(v => v.id === curVehicle);
+  if (!vehicle) return;
+
+  const items = getItems();
+  const label = curPeriod === 'morning' ? 'お迎え' : 'お送り';
+
+  let html = '';
+  if (items.length === 0) {
+    html += `<div style="padding:8px 12px 0;">
+      <button class="copy-btn" onclick="copyFromOtherPeriod()">↕ ${curPeriod==='morning'?'午後（お送り）':'午前（お迎え）'}から利用者をコピー</button>
+    </div>`;
+  }
+  html += '<div class="schedule-list">';
+  if (items.length === 0) {
+    html += `<div class="empty-state" style="padding:24px 0;"><div class="empty-icon">📋</div><p>${label}の利用者を追加してください</p></div>`;
+  } else {
+    items.forEach((item, idx) => {
+      const user = data.users.find(u => u.id === item.userId);
+      if (!user) return;
+      html += `
+        <div class="schedule-item" style="border-left-color:${vehicle.color};">
+          <div class="item-header">
+            <div class="order-badge" style="background:${vehicle.color};">${idx+1}</div>
+            <div class="item-info">
+              <div class="item-name">
+                ${user.wheelchair ? '<span title="車椅子">♿</span>' : ''}
+                ${esc(user.name)}
+              </div>
+              <div class="item-address">${esc(user.address || '住所未登録')}</div>
+            </div>
+            <div class="item-times">
+              <div class="time-group">
+                <span class="time-label">予定</span>
+                <span class="time-val">${item.scheduledTime || '--:--'}</span>
+              </div>
+              <div class="time-group">
+                <span class="time-label">実績</span>
+                <span class="time-val ${item.actualTime ? 'actual' : 'empty'}">${item.actualTime || '--:--'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="item-actions">
+            <button class="act-btn" onclick="moveItem('${item.id}',-1)" ${idx===0?'disabled':''}>▲</button>
+            <button class="act-btn" onclick="moveItem('${item.id}',1)"  ${idx===items.length-1?'disabled':''}>▼</button>
+            <button class="act-btn" onclick="openTimeEdit('${item.id}')">⏱ 時刻・メモ</button>
+            <span class="item-note">${item.note ? esc(item.note) : ''}</span>
+            <button class="act-btn danger" onclick="removeItem('${item.id}')">✕</button>
+          </div>
+        </div>`;
+    });
+  }
+  if (items.length >= 2) {
+    html += `<button class="add-user-btn" style="border-color:#27ae60;color:#27ae60;margin-bottom:6px;" onclick="openRouteOptimizer()">🗺️ ルートを最適化する</button>`;
+  }
+  html += `<button class="add-user-btn" onclick="openAddToSchedule()">＋ ${label}の利用者を追加</button></div>`;
+  container.innerHTML = html;
+}
+
+// ── 全車両まとめ表示 ──
+function renderAllVehicles(container) {
+  const label = curPeriod === 'morning' ? 'お迎え' : 'お送り';
+  let html = '<div style="padding:10px 12px;">';
+
+  data.vehicles.forEach(v => {
+    const k = curDate + '.' + curPeriod + '.' + v.id;
+    const items = data.schedules[k] || [];
+    const driver = data.staff.find(s => s.id === v.driverId);
+    const staff  = data.staff.find(s => s.id === v.staffId);
+    const driverWarn = isAbsent(v.driverId) ? ' ⚠️' : '';
+    const staffWarn  = isAbsent(v.staffId)  ? ' ⚠️' : '';
+    const crewParts = [];
+    if (driver) crewParts.push('Dr:' + esc(driver.name) + driverWarn);
+    if (staff)  crewParts.push('St:' + esc(staff.name)  + staffWarn);
+
+    html += `<div class="all-section">
+      <div class="all-section-header" style="background:${v.color};">
+        ${esc(v.name)}
+        ${crewParts.length ? '<span style="font-size:0.72rem;opacity:0.85;font-weight:normal;margin-left:8px;">' + crewParts.join('　') + '</span>' : ''}
+        <span style="margin-left:auto;font-size:0.75rem;font-weight:normal;opacity:0.85;">${items.length}名</span>
+      </div>`;
+
+    if (items.length === 0) {
+      html += `<div class="all-section-empty">${label}の登録なし</div>`;
+    } else {
+      items.forEach((item, idx) => {
+        const user = data.users.find(u => u.id === item.userId);
+        if (!user) return;
+        html += `<div class="all-item" style="border-left:3px solid ${v.color};">
+          <div class="all-item-order" style="background:${v.color};">${idx+1}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="all-item-name">${user.wheelchair?'♿ ':''}${esc(user.name)}</div>
+            <div class="all-item-address">${esc(user.address||'')}</div>
+          </div>
+          <div class="all-item-times">
+            <div class="all-time">
+              <span class="all-time-label">予定</span>
+              <span class="all-time-val">${item.scheduledTime||'--:--'}</span>
+            </div>
+            <div class="all-time">
+              <span class="all-time-label">実績</span>
+              <span class="all-time-val ${item.actualTime?'actual':'empty'}">${item.actualTime||'--:--'}</span>
+            </div>
+          </div>
+        </div>`;
+      });
+    }
+    html += '</div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function moveItem(itemId, dir) {
+  const items = ensureItems();
+  const i = items.findIndex(x => x.id === itemId);
+  const j = i + dir;
+  if (j < 0 || j >= items.length) return;
+  [items[i], items[j]] = [items[j], items[i]];
+  save(); renderScheduleList();
+}
+
+function removeItem(itemId) {
+  const k = schedKey();
+  if (!data.schedules[k]) return;
+  data.schedules[k] = data.schedules[k].filter(x => x.id !== itemId);
+  save(); renderScheduleList();
+}
+
+function copyFromOtherPeriod() {
+  const other = curPeriod === 'morning' ? 'afternoon' : 'morning';
+  const src = data.schedules[curDate + '.' + other + '.' + curVehicle];
+  if (!src || src.length === 0) {
+    alert('コピー元に利用者がいません'); return;
+  }
+  const dest = ensureItems();
+  const existIds = dest.map(x => x.userId);
+  src.forEach(s => {
+    if (existIds.includes(s.userId)) return;
+    const user = data.users.find(u => u.id === s.userId);
+    dest.push({
+      id: uid(), userId: s.userId,
+      scheduledTime: curPeriod === 'morning' ? (user?.defaultPickupTime||'') : (user?.defaultDropoffTime||''),
+      actualTime: '', note: '',
+    });
+  });
+  save(); renderScheduleList();
+}
+
+// ── 利用者追加モーダル ──
+function openAddToSchedule() {
+  if (curVehicle === 'all') return;
+  const label = curPeriod === 'morning' ? '午前（お迎え）' : '午後（お送り）';
+  document.getElementById('modal-add-title').textContent = label + ' 利用者を追加';
+
+  // 同じ日・同じ便の全車両に登録済みのユーザーを収集（どの車両かも記録）
+  const usedInVehicle = {}; // userId → vehicle
+  data.vehicles.forEach(v => {
+    const k = curDate + '.' + curPeriod + '.' + v.id;
+    (data.schedules[k] || []).forEach(item => {
+      usedInVehicle[item.userId] = v;
+    });
+  });
+
+  const list = document.getElementById('user-select-list');
+  if (data.users.length === 0) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:#aaa;">利用者が登録されていません</div>';
+  } else {
+    list.innerHTML = data.users.map(u => {
+      const assignedVehicle = usedInVehicle[u.id];
+      const inThisVehicle   = assignedVehicle?.id === curVehicle;
+      const inOtherVehicle  = assignedVehicle && !inThisVehicle;
+      const disabled = inThisVehicle || inOtherVehicle;
+      let badge = '';
+      if (inThisVehicle)  badge = '<span style="color:#aaa;font-size:0.7rem;">（この車両に追加済）</span>';
+      if (inOtherVehicle) badge = `<span style="color:#e67e22;font-size:0.7rem;">⚠️ ${esc(assignedVehicle.name)}に登録済</span>`;
+      return `<label class="user-select-item" style="${inOtherVehicle?'opacity:0.6;':''}">
+        <input type="checkbox" value="${u.id}" ${disabled?'checked disabled':''}>
+        <div>
+          <div class="user-select-name">${u.wheelchair?'♿ ':''}${esc(u.name)} ${badge}</div>
+          <div class="user-select-sub">${esc(u.address||'')}</div>
+        </div>
+      </label>`;
+    }).join('');
+  }
+
+  // 帰りも追加チェックボックス
+  const wrap = document.getElementById('also-return-wrap');
+  const labelEl = document.getElementById('also-return-label');
+  document.getElementById('also-return').checked = false;
+  wrap.style.display = 'block';
+  labelEl.textContent = curPeriod === 'morning'
+    ? '帰り（午後）にも同じ利用者を追加する'
+    : '行き（午前）にも同じ利用者を追加する';
+
+  openModal('modal-add-to-schedule');
+}
+
+function addSelectedUsers() {
+  const checked = document.querySelectorAll('#user-select-list input[type="checkbox"]:checked:not(:disabled)');
+  const alsoReturn = document.getElementById('also-return').checked;
+  const otherPeriod = curPeriod === 'morning' ? 'afternoon' : 'morning';
+
+  const items = ensureItems();
+  const otherKey = curDate + '.' + otherPeriod + '.' + curVehicle;
+  if (alsoReturn && !data.schedules[otherKey]) data.schedules[otherKey] = [];
+  const otherItems = alsoReturn ? data.schedules[otherKey] : null;
+  const otherExistIds = otherItems ? otherItems.map(x => x.userId) : [];
+
+  checked.forEach(cb => {
+    const userId = cb.value;
+    const user = data.users.find(u => u.id === userId);
+    if (!user) return;
+    items.push({
+      id: uid(), userId,
+      scheduledTime: curPeriod === 'morning' ? (user.defaultPickupTime||'') : (user.defaultDropoffTime||''),
+      actualTime: '', note: '',
+    });
+    if (otherItems && !otherExistIds.includes(userId)) {
+      otherItems.push({
+        id: uid(), userId,
+        scheduledTime: otherPeriod === 'morning' ? (user.defaultPickupTime||'') : (user.defaultDropoffTime||''),
+        actualTime: '', note: '',
+      });
+    }
+  });
+  save(); closeModal('modal-add-to-schedule'); renderScheduleList();
+}
+
+// ── 時刻・メモ編集 ──
+function openTimeEdit(itemId) {
+  const item = getItems().find(x => x.id === itemId);
+  if (!item) return;
+  const user = data.users.find(u => u.id === item.userId);
+  document.getElementById('modal-time-title').textContent = esc(user?.name||'') + ' の時刻・メモ';
+  document.getElementById('edit-time-key').value = schedKey() + '.' + itemId;
+  document.getElementById('edit-scheduled-time').value = item.scheduledTime || '';
+  document.getElementById('edit-actual-time').value    = item.actualTime    || '';
+  document.getElementById('edit-note').value           = item.note          || '';
+  openModal('modal-time-edit');
+}
+
+function saveTimeEdit() {
+  const raw = document.getElementById('edit-time-key').value;
+  const lastDot = raw.lastIndexOf('.');
+  const itemId = raw.slice(lastDot + 1);
+  const k = raw.slice(0, lastDot);
+  const items = data.schedules[k];
+  if (!items) return;
+  const item = items.find(x => x.id === itemId);
+  if (!item) return;
+  item.scheduledTime = document.getElementById('edit-scheduled-time').value;
+  item.actualTime    = document.getElementById('edit-actual-time').value;
+  item.note          = document.getElementById('edit-note').value.trim();
+  save(); closeModal('modal-time-edit');
+  if (k === schedKey()) renderScheduleList();
+}
+
+// ================================================================
+// Users Page
+// ================================================================
+function renderUsersPage() {
+  refreshVehicleOptions('user-default-vehicle');
+  const list = document.getElementById('user-list');
+  if (data.users.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding:22px;"><p>利用者が登録されていません</p></div>`;
+    return;
+  }
+  list.innerHTML = data.users.map(u => {
+    const veh = data.vehicles.find(v => v.id === u.defaultVehicle);
+    return `<div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-name">${u.wheelchair?'♿ ':''}${esc(u.name)}</div>
+        <div class="list-item-sub">
+          ${u.address ? esc(u.address)+'　' : ''}
+          ${veh ? '<span style="color:'+veh.color+';">●&nbsp;'+esc(veh.name)+'</span>' : ''}
+          ${u.defaultPickupTime  ? '　迎：'+u.defaultPickupTime  : ''}
+          ${u.defaultDropoffTime ? '　送：'+u.defaultDropoffTime : ''}
+        </div>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-sm btn-edit"   onclick="openUserModal('${u.id}')">編集</button>
+        <button class="btn-sm btn-delete" onclick="deleteUser('${u.id}')">削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openUserModal(userId) {
+  refreshVehicleOptions('user-default-vehicle');
+  if (userId) {
+    const u = data.users.find(u => u.id === userId);
+    if (!u) return;
+    document.getElementById('modal-user-title').textContent = '利用者を編集';
+    document.getElementById('edit-user-id').value = userId;
+    document.getElementById('user-name').value = u.name;
+    document.getElementById('user-address').value = u.address || '';
+    document.getElementById('user-phone').value   = u.phone   || '';
+    document.getElementById('user-default-vehicle').value  = u.defaultVehicle  || '';
+    document.getElementById('user-default-pickup').value   = u.defaultPickupTime  || '';
+    document.getElementById('user-default-dropoff').value  = u.defaultDropoffTime || '';
+    document.getElementById('user-wheelchair').checked     = !!u.wheelchair;
+  } else {
+    document.getElementById('modal-user-title').textContent = '利用者を追加';
+    document.getElementById('edit-user-id').value = '';
+    ['user-name','user-address','user-phone','user-default-pickup','user-default-dropoff'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('user-default-vehicle').value = '';
+    document.getElementById('user-wheelchair').checked = false;
+  }
+  openModal('modal-user');
+}
+
+function saveUser() {
+  const name = document.getElementById('user-name').value.trim();
+  if (!name) { alert('氏名を入力してください'); return; }
+  const userId = document.getElementById('edit-user-id').value;
+  const u = {
+    id: userId || uid(), name,
+    address:          document.getElementById('user-address').value.trim(),
+    phone:            document.getElementById('user-phone').value.trim(),
+    defaultVehicle:   document.getElementById('user-default-vehicle').value,
+    defaultPickupTime:  document.getElementById('user-default-pickup').value,
+    defaultDropoffTime: document.getElementById('user-default-dropoff').value,
+    wheelchair: document.getElementById('user-wheelchair').checked,
+  };
+  if (userId) {
+    const i = data.users.findIndex(x => x.id === userId);
+    if (i >= 0) data.users[i] = u; else data.users.push(u);
+  } else { data.users.push(u); }
+  save(); closeModal('modal-user'); renderUsersPage();
+}
+
+function deleteUser(userId) {
+  if (!confirm('この利用者を削除しますか？')) return;
+  data.users = data.users.filter(u => u.id !== userId);
+  save(); renderUsersPage();
+}
+
+// ================================================================
+// Vehicles Page
+// ================================================================
+function renderVehiclesPage() {
+  const container = document.getElementById('vehicle-list');
+  if (data.vehicles.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding:22px;"><p>車両が登録されていません</p></div>`;
+    return;
+  }
+  container.innerHTML = data.vehicles.map(v => {
+    const driver = data.staff.find(s => s.id === v.driverId);
+    const staff  = data.staff.find(s => s.id === v.staffId);
+    return `
+      <div class="vehicle-card" style="border-left-color:${v.color};">
+        <div class="vehicle-card-header">
+          <span class="vehicle-card-name" style="color:${v.color};">● ${esc(v.name)}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-sm btn-edit"   onclick="openVehicleModal('${v.id}')">編集</button>
+            <button class="btn-sm btn-delete" onclick="deleteVehicle('${v.id}')">削除</button>
+          </div>
+        </div>
+        <div class="vehicle-card-body">
+          <div class="vehicle-role-item">
+            <div class="vehicle-role-label">🚗 ドライバー</div>
+            <div class="vehicle-role-name ${driver?'':'empty'}">${driver ? esc(driver.name) : '未設定'}</div>
+          </div>
+          <div class="vehicle-role-item">
+            <div class="vehicle-role-label">👤 同乗スタッフ</div>
+            <div class="vehicle-role-name ${staff?'':'empty'}">${staff ? esc(staff.name) : '未設定'}</div>
+          </div>
+        </div>
+        ${v.note ? `<div style="padding:0 14px 10px;font-size:0.75rem;color:#aaa;">${esc(v.note)}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function openVehicleModal(vehicleId) {
+  const noStaff = data.staff.length === 0;
+  document.getElementById('staff-notice').style.display = noStaff ? 'block' : 'none';
+  document.getElementById('vehicle-driver-new').style.display = noStaff ? 'block' : 'none';
+  document.getElementById('vehicle-staff-new').style.display  = noStaff ? 'block' : 'none';
+  document.getElementById('vehicle-driver-new').value = '';
+  document.getElementById('vehicle-staff-new').value  = '';
+
+  // 他の車両ですでに使われているスタッフIDを収集（今編集中の車両は除外）
+  const usedIds = new Set();
+  data.vehicles.forEach(v => {
+    if (v.id === vehicleId) return;
+    if (v.driverId) usedIds.add(v.driverId);
+    if (v.staffId)  usedIds.add(v.staffId);
+  });
+  const makeOptions = (currentId) => '<option value="">未設定</option>' +
+    data.staff.map(s => {
+      const used = usedIds.has(s.id) && s.id !== currentId;
+      return `<option value="${s.id}" ${used ? 'disabled' : ''}>${esc(s.name)}${used ? '（他車両に割当済）' : ''}</option>`;
+    }).join('');
+  const curV = vehicleId ? data.vehicles.find(v => v.id === vehicleId) : null;
+  document.getElementById('vehicle-driver').innerHTML = makeOptions(curV?.driverId || '');
+  document.getElementById('vehicle-staff').innerHTML  = makeOptions(curV?.staffId  || '');
+  document.getElementById('vehicle-driver').style.display = noStaff ? 'none' : '';
+  document.getElementById('vehicle-staff').style.display  = noStaff ? 'none' : '';
+
+  const currentColor = vehicleId
+    ? (data.vehicles.find(v => v.id === vehicleId)?.color || COLORS[0])
+    : COLORS[0];
+  document.getElementById('color-options').innerHTML = COLORS.map(c =>
+    `<div class="color-option ${c===currentColor?'selected':''}" data-color="${c}"
+         style="background:${c};" onclick="selectColor('${c}')"></div>`
+  ).join('');
+
+  if (vehicleId) {
+    const v = data.vehicles.find(v => v.id === vehicleId);
+    if (!v) return;
+    document.getElementById('modal-vehicle-title').textContent = '車両を編集';
+    document.getElementById('edit-vehicle-id').value = vehicleId;
+    document.getElementById('vehicle-name').value    = v.name;
+    document.getElementById('vehicle-color').value   = v.color;
+    document.getElementById('vehicle-driver').value  = v.driverId || '';
+    document.getElementById('vehicle-staff').value   = v.staffId  || '';
+    document.getElementById('vehicle-note').value    = v.note     || '';
+  } else {
+    document.getElementById('modal-vehicle-title').textContent = '車両を追加';
+    document.getElementById('edit-vehicle-id').value = '';
+    document.getElementById('vehicle-name').value    = '';
+    document.getElementById('vehicle-color').value   = COLORS[0];
+    document.getElementById('vehicle-driver').value  = '';
+    document.getElementById('vehicle-staff').value   = '';
+    document.getElementById('vehicle-note').value    = '';
+  }
+  openModal('modal-vehicle');
+}
+
+function selectColor(color) {
+  document.getElementById('vehicle-color').value = color;
+  document.querySelectorAll('.color-option').forEach(el => el.classList.toggle('selected', el.dataset.color === color));
+}
+
+function saveVehicle() {
+  const name = document.getElementById('vehicle-name').value.trim();
+  if (!name) { alert('車両名を入力してください'); return; }
+  const vehicleId = document.getElementById('edit-vehicle-id').value;
+
+  // スタッフ未登録時の新規入力を自動登録
+  function resolveStaff(selectId, inputId) {
+    const newName = document.getElementById(inputId).value.trim();
+    if (newName) {
+      const existing = data.staff.find(s => s.name === newName);
+      if (existing) return existing.id;
+      const s = { id: uid(), name: newName };
+      data.staff.push(s);
+      return s.id;
+    }
+    return document.getElementById(selectId).value || '';
+  }
+
+  const v = {
+    id: vehicleId || uid(), name,
+    color:    document.getElementById('vehicle-color').value  || COLORS[0],
+    driverId: resolveStaff('vehicle-driver', 'vehicle-driver-new'),
+    staffId:  resolveStaff('vehicle-staff',  'vehicle-staff-new'),
+    note:     document.getElementById('vehicle-note').value.trim(),
+  };
+  if (vehicleId) {
+    const i = data.vehicles.findIndex(x => x.id === vehicleId);
+    if (i >= 0) data.vehicles[i] = v; else data.vehicles.push(v);
+  } else { data.vehicles.push(v); }
+  save(); closeModal('modal-vehicle'); renderVehiclesPage();
+}
+
+function deleteVehicle(vehicleId) {
+  if (!confirm('この車両を削除しますか？')) return;
+  data.vehicles = data.vehicles.filter(v => v.id !== vehicleId);
+  if (curVehicle === vehicleId) curVehicle = data.vehicles[0]?.id || null;
+  save(); renderVehiclesPage();
+}
+
+// ================================================================
+// Staff Page
+// ================================================================
+function renderStaffPage() {
+  const list = document.getElementById('staff-list');
+  if (data.staff.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding:22px;"><p>スタッフが登録されていません</p></div>`;
+    return;
+  }
+  list.innerHTML = data.staff.map(s => {
+    const assignedVehicles = data.vehicles.filter(v => v.driverId === s.id || v.staffId === s.id);
+    const roles = assignedVehicles.map(v => {
+      const role = v.driverId === s.id ? 'Dr' : 'St';
+      return `<span style="color:${v.color};">${role}:${esc(v.name)}</span>`;
+    }).join('　');
+    return `<div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-name">👤 ${esc(s.name)}</div>
+        ${roles ? `<div class="list-item-sub">${roles}</div>` : ''}
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-sm btn-edit"   onclick="openStaffModal('${s.id}')">編集</button>
+        <button class="btn-sm btn-delete" onclick="deleteStaff('${s.id}')">削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openStaffModal(staffId) {
+  if (staffId) {
+    const s = data.staff.find(s => s.id === staffId);
+    if (!s) return;
+    document.getElementById('modal-staff-title').textContent = 'スタッフを編集';
+    document.getElementById('edit-staff-id').value = staffId;
+    document.getElementById('staff-name').value    = s.name;
+  } else {
+    document.getElementById('modal-staff-title').textContent = 'スタッフを追加';
+    document.getElementById('edit-staff-id').value = '';
+    document.getElementById('staff-name').value    = '';
+  }
+  openModal('modal-staff');
+}
+
+function saveStaff() {
+  const name = document.getElementById('staff-name').value.trim();
+  if (!name) { alert('氏名を入力してください'); return; }
+  const staffId = document.getElementById('edit-staff-id').value;
+  const s = { id: staffId || uid(), name };
+  if (staffId) {
+    const i = data.staff.findIndex(x => x.id === staffId);
+    if (i >= 0) data.staff[i] = s; else data.staff.push(s);
+  } else { data.staff.push(s); }
+  save(); closeModal('modal-staff'); renderStaffPage();
+}
+
+function deleteStaff(staffId) {
+  if (!confirm('このスタッフを削除しますか？\n車両に設定されている場合は解除されます。')) return;
+  data.staff = data.staff.filter(s => s.id !== staffId);
+  data.vehicles.forEach(v => {
+    if (v.driverId === staffId) v.driverId = '';
+    if (v.staffId  === staffId) v.staffId  = '';
+  });
+  save(); renderStaffPage();
+}
+
+// ================================================================
+// Utilities
+// ================================================================
+function refreshVehicleOptions(selectId) {
+  document.getElementById(selectId).innerHTML =
+    '<option value="">未設定</option>' +
+    data.vehicles.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join('');
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(ov =>
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); })
+);
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateHeaderDate() {
+  const [y,m,d] = curDate.split('-').map(Number);
+  const dow = ['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
+  document.getElementById('header-date').textContent = `${y}年${m}月${d}日（${dow}）`;
+}
+
+// ================================================================
+// Init
+// ================================================================
+(function init() {
+  document.getElementById('date-picker').value = curDate;
+  updateHeaderDate();
+  applyPeriodTheme(curPeriod);
+  renderSchedulePage();
+})();
+
+// ================================================================
+// Route Optimizer
+// ================================================================
+
+let optimizedRoute = null;
+
+function openRouteOptimizer() {
+  if (curVehicle === 'all') return;
+  const items = getItems();
+  if (items.length < 2) { alert('利用者が2名以上必要です'); return; }
+
+  document.getElementById('route-setup').style.display     = 'block';
+  document.getElementById('route-progress').style.display  = 'none';
+  document.getElementById('route-result').style.display    = 'none';
+
+  document.getElementById('facility-address').value = data.settings?.facilityAddress || '';
+  openModal('modal-route');
+}
+
+async function startRouteOptimize() {
+  const facilityAddr = document.getElementById('facility-address').value.trim();
+  const departTime   = document.getElementById('route-depart').value;
+  const arriveTime   = document.getElementById('route-arrive').value;
+
+  if (!facilityAddr) { alert('施設の住所を入力してください'); return; }
+  if (!departTime || !arriveTime) { alert('出発時刻と施設着時刻を入力してください'); return; }
+  if (timeToMinutes(arriveTime) <= timeToMinutes(departTime)) {
+    alert('施設着時刻は出発時刻より後にしてください'); return;
+  }
+
+  if (!data.settings) data.settings = {};
+  data.settings.facilityAddress = facilityAddr;
+  save();
+
+  document.getElementById('route-setup').style.display    = 'none';
+  document.getElementById('route-progress').style.display = 'block';
+
+  const items = getItems().filter(item => data.users.find(u => u.id === item.userId));
+  const total = items.length + 1;
+
+  // ── 施設を座標に変換 ──
+  setProgress('施設の住所を検索中...', 0);
+  const facilityCoords = await geocodeAddress(facilityAddr);
+  if (!facilityCoords) {
+    alert('施設の住所が見つかりませんでした。住所を確認してください。');
+    document.getElementById('route-setup').style.display    = 'block';
+    document.getElementById('route-progress').style.display = 'none';
+    return;
+  }
+
+  // ── 利用者住所を座標に変換 ──
+  const points = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const user = data.users.find(u => u.id === item.userId);
+    setProgress(`${esc(user?.name || '')} の住所を検索中... (${i+1}/${items.length})`,
+      Math.round((i + 1) / total * 80));
+    const coords = user?.address ? await geocodeAddress(user.address) : null;
+    if (i < items.length - 1) await sleep(1000); // Nominatim rate limit
+    points.push({ item, user, coords });
+  }
+
+  setProgress('最短ルートを計算中...', 90);
+  await sleep(200);
+
+  // ── TSP ──
+  const geocoded = points.filter(p => p.coords);
+  const failed   = points.filter(p => !p.coords);
+  const ordered  = nearestNeighborTSP(facilityCoords, geocoded);
+  const fullRoute = [...ordered, ...failed];
+
+  // ── 予定時刻を計算 ──
+  const totalMins = timeToMinutes(arriveTime) - timeToMinutes(departTime);
+  const times = calcScheduleTimes(facilityCoords, fullRoute, departTime, totalMins);
+  optimizedRoute = fullRoute.map((p, i) => ({ ...p, estimatedTime: times[i] }));
+
+  setProgress('完了', 100);
+  await sleep(300);
+  showRouteResult(departTime, arriveTime);
+}
+
+function setProgress(text, pct) {
+  document.getElementById('route-progress-text').textContent = text;
+  document.getElementById('route-progress-bar').style.width  = pct + '%';
+}
+
+function showRouteResult(departTime, arriveTime) {
+  document.getElementById('route-progress').style.display = 'none';
+  document.getElementById('route-result').style.display   = 'block';
+
+  const v = data.vehicles.find(v => v.id === curVehicle);
+  const color = v?.color || '#2980b9';
+
+  let html = `<div style="background:#f0f4f8;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:0.8rem;">
+    🏢 施設 出発 <strong>${departTime}</strong>
+  </div>`;
+
+  optimizedRoute.forEach((p, i) => {
+    const ok = !!p.coords;
+    html += `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;
+                  border-radius:8px;margin-bottom:4px;border-left:3px solid ${ok?color:'#ccc'};">
+        <div style="width:22px;height:22px;border-radius:50%;background:${ok?color:'#bbb'};
+                    display:flex;align-items:center;justify-content:center;
+                    color:#fff;font-size:0.72rem;font-weight:700;flex-shrink:0;">${i+1}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:0.88rem;">
+            ${p.user?.wheelchair?'♿ ':''}${esc(p.user?.name||'')}
+          </div>
+          <div style="font-size:0.7rem;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${esc(p.user?.address||'住所未登録')}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:0.9rem;font-weight:700;${ok?'':'color:#ccc'}">${p.estimatedTime||'--:--'}</div>
+          ${!ok?'<div style="font-size:0.65rem;color:#e67e22;">⚠️住所未取得</div>':''}
+        </div>
+      </div>`;
+  });
+
+  html += `<div style="background:#f0f4f8;border-radius:8px;padding:9px 12px;margin-top:6px;font-size:0.8rem;">
+    🏢 施設 到着 <strong>${arriveTime}</strong>
+  </div>`;
+
+  document.getElementById('route-result-list').innerHTML = html;
+}
+
+function applyRoute() {
+  if (!optimizedRoute) return;
+  const k = schedKey();
+  const cur = data.schedules[k] || [];
+  data.schedules[k] = optimizedRoute.map(p => {
+    const existing = cur.find(x => x.id === p.item.id) || p.item;
+    return { ...existing, scheduledTime: p.estimatedTime || existing.scheduledTime };
+  });
+  save();
+  closeModal('modal-route');
+  renderScheduleList();
+}
+
+// ── Nominatim ジオコーディング ──
+async function geocodeAddress(address) {
+  if (!address?.trim()) return null;
+  if (!data.geocache) data.geocache = {};
+  if (data.geocache[address]) return data.geocache[address];
+  try {
+    const url = 'https://nominatim.openstreetmap.org/search?q='
+      + encodeURIComponent(address)
+      + '&format=json&limit=1&countrycodes=jp';
+    const res = await fetch(url, { headers: { 'User-Agent': 'DayServiceSougeiApp/1.0' } });
+    const json = await res.json();
+    if (!json.length) return null;
+    const coords = { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
+    data.geocache[address] = coords;
+    save();
+    return coords;
+  } catch { return null; }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Haversine 距離（km）──
+function haversine(a, b) {
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat/2)**2
+    + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// ── 最近傍TSP ──
+function nearestNeighborTSP(start, points) {
+  if (!points.length) return [];
+  const rem = [...points];
+  const route = [];
+  let cur = start;
+  while (rem.length) {
+    let idx = 0, best = Infinity;
+    rem.forEach((p, i) => {
+      const d = haversine(cur, p.coords);
+      if (d < best) { best = d; idx = i; }
+    });
+    route.push(rem[idx]);
+    cur = rem[idx].coords;
+    rem.splice(idx, 1);
+  }
+  return route;
+}
+
+// ── 予定時刻を距離比で配分 ──
+function calcScheduleTimes(facilityCoords, route, departTime, totalMins) {
+  const distances = [];
+  let prev = facilityCoords;
+  route.forEach(p => {
+    distances.push(p.coords ? haversine(prev, p.coords) : 0);
+    if (p.coords) prev = p.coords;
+  });
+  const totalDist = distances.reduce((a, b) => a + b, 0);
+  const startMins = timeToMinutes(departTime);
+  let elapsed = 0;
+  return distances.map(d => {
+    elapsed += totalDist > 0
+      ? (d / totalDist) * totalMins
+      : totalMins / Math.max(route.length, 1);
+    return minutesToTime(startMins + Math.round(elapsed));
+  });
+}
+
+function timeToMinutes(t) {
+  const [h, m] = (t || '00:00').split(':').map(Number);
+  return h * 60 + m;
+}
+
+function minutesToTime(m) {
+  const h = Math.floor((m % 1440) / 60);
+  const min = m % 60;
+  return String(h).padStart(2,'0') + ':' + String(min).padStart(2,'0');
+}
+</script>
+</body>
+</html>
