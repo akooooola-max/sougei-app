@@ -510,6 +510,65 @@
     .all-time-val.actual { color: var(--success); }
     .all-time-val.empty  { color: #ddd; }
 
+    /* ── Help / Q&A ── */
+    .qa-list { padding: 12px; }
+    .qa-item {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .qa-question {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 14px;
+      cursor: pointer;
+      user-select: none;
+      gap: 10px;
+    }
+    .qa-question-text {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary);
+      flex: 1;
+    }
+    .qa-question-text::before { content: 'Q. '; }
+    .qa-toggle { font-size: 0.72rem; color: #aaa; flex-shrink: 0; }
+    .qa-answer {
+      display: none;
+      padding: 0 14px 14px;
+      font-size: 0.82rem;
+      color: #444;
+      line-height: 1.7;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 10px;
+    }
+    .qa-answer.open { display: block; }
+    .qa-answer ul { padding-left: 18px; margin: 6px 0; }
+    .qa-answer li { margin-bottom: 4px; }
+    .qa-answer .tag {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-right: 3px;
+    }
+    .help-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 14px 10px;
+      margin: 12px 12px 0;
+      border-radius: 12px 12px 0 0;
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+    .help-header strong { font-size: 0.95rem; display: block; margin-bottom: 4px; }
+
     /* ── Print ── */
     @media print {
       .app-header .header-btn, .bottom-nav, .date-strip input[type="date"],
@@ -590,6 +649,173 @@
   </div>
 </div>
 
+<!-- ══ ヘルプ ══ -->
+<div class="page" id="page-help">
+  <div class="help-header">
+    <strong>📖 使い方ガイド（よくある質問）</strong>
+    質問をタップすると答えが表示されます
+  </div>
+  <div class="qa-list">
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">はじめて使います。どの順番で設定すればいいですか？</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        以下の順番で設定してください。
+        <ul>
+          <li>① <span class="tag">スタッフ</span>タブでドライバー・スタッフを登録</li>
+          <li>② <span class="tag">車両</span>タブで車両を追加し、担当スタッフを設定</li>
+          <li>③ <span class="tag">利用者</span>タブで利用者を登録（住所・時刻も入力しておくと便利）</li>
+          <li>④ <span class="tag">送迎表</span>タブで日付を選び、利用者を追加して完成</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">送迎表に利用者を追加するには？</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        <ul>
+          <li>① 画面上部で日付と <strong>午前（お迎え）／午後（お送り）</strong> を選択</li>
+          <li>② 車両タブで対象の車両を選択</li>
+          <li>③ 一番下の <strong>「＋ お迎えの利用者を追加」</strong> ボタンをタップ</li>
+          <li>④ 追加したい利用者にチェックを入れて「追加」をタップ</li>
+        </ul>
+        ※「帰り（午後）にも同じ利用者を追加する」にチェックを入れると、午前・午後まとめて登録できます。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">送迎の順番を変えたいときは？</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        各利用者カードの下部にある <strong>▲ ▼ ボタン</strong> をタップすると、順番を上下に移動できます。<br><br>
+        住所をもとに自動で最適な順番に並び替える <strong>🗺️ ルートを最適化する</strong> ボタンも使えます（利用者が2名以上の場合に表示されます）。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">予定時刻・実績時刻・メモを入力したい</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        各利用者カードの <strong>「⏱ 時刻・メモ」</strong> ボタンをタップすると編集画面が開きます。
+        <ul>
+          <li><strong>予定時刻</strong>：事前に計画した到着予定時刻</li>
+          <li><strong>実績時刻</strong>：実際に迎えた／送った時刻（緑色で表示されます）</li>
+          <li><strong>メモ</strong>：「玄関前で待機」など自由に入力できます</li>
+        </ul>
+        ※利用者登録時に設定したデフォルト時刻が自動でセットされます。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">午前と午後で同じ利用者を使いたい</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        2つの方法があります。
+        <ul>
+          <li><strong>方法①（追加時）</strong>：利用者追加モーダルで「帰り（午後）にも同じ利用者を追加する」にチェックを入れる</li>
+          <li><strong>方法②（後からコピー）</strong>：対象の時間帯（午前 or 午後）に切り替え、利用者が0人の状態のときに表示される <strong>「↕ コピー」ボタン</strong> をタップする</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">スタッフの欠勤を登録したい</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        送迎表の上部にある <strong>「👥 出欠」</strong> をタップするとスタッフ一覧が開きます。<br>
+        該当スタッフの <strong>「出勤」ボタン</strong> をタップすると「🌙 休み」に切り替わります。<br><br>
+        ドライバーや同乗スタッフが欠勤の場合、車両タブに <strong>⚠️ 欠勤</strong> の警告が表示されます。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">全車両の送迎状況を一覧で確認したい</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        車両タブの一番左にある <strong>「📋 全車両」</strong> をタップすると、全車両の送迎リストをまとめて確認できます。印刷にも便利です。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">印刷・PDF保存したい</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        画面右上の <strong>「🖨 印刷」ボタン</strong> をタップしてください。<br>
+        印刷ダイアログで「PDFに保存」を選ぶとPDFとして保存できます。<br><br>
+        ※印刷時はボタンや操作部分が自動的に非表示になり、送迎表のみが印刷されます。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">データはどこに保存されますか？</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        データは <strong>このブラウザ（端末）に自動保存</strong> されます。操作するたびに即座に保存されるため、手動で保存する必要はありません。<br><br>
+        ⚠️ 注意点：
+        <ul>
+          <li>ブラウザの「閲覧データを削除」を行うとデータが消えます</li>
+          <li>別の端末・別のブラウザからは見られません</li>
+          <li>アプリを削除・再インストールしてもデータは消えません（ブラウザ側に保存されるため）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">入力したデータが消えてしまった</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        以下の操作でデータが消えることがあります。
+        <ul>
+          <li>ブラウザの「履歴・キャッシュの削除」「サイトデータの削除」</li>
+          <li>ブラウザのプライベート（シークレット）モードで使用した場合</li>
+          <li>ブラウザのアップデートや設定リセット</li>
+        </ul>
+        大切なデータは定期的に <strong>🖨 印刷 → PDFで保存</strong> しておくことをおすすめします。
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-question" onclick="toggleQa(this)">
+        <span class="qa-question-text">ルート最適化はどのように使いますか？</span>
+        <span class="qa-toggle">▼</span>
+      </div>
+      <div class="qa-answer">
+        利用者が2名以上いる場合に <strong>「🗺️ ルートを最適化する」</strong> ボタンが表示されます。
+        <ul>
+          <li>① 施設の住所を入力</li>
+          <li>② 施設を出発する時刻と、施設に到着する予定時刻を入力</li>
+          <li>③「最適化を開始」をタップ</li>
+          <li>④ 提案された順番を確認して「この順番で確定」をタップ</li>
+        </ul>
+        ※インターネット接続が必要です。住所が登録されていない利用者はリストの末尾に表示されます。
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ══ Bottom Nav ══ -->
 <nav class="bottom-nav">
   <button class="nav-item active" id="nav-schedule" onclick="showPage('schedule')">
@@ -603,6 +829,9 @@
   </button>
   <button class="nav-item" id="nav-staff" onclick="showPage('staff')">
     <span class="nav-icon">👤</span>スタッフ
+  </button>
+  <button class="nav-item" id="nav-help" onclick="showPage('help')">
+    <span class="nav-icon">❓</span>ヘルプ
   </button>
 </nav>
 
@@ -850,6 +1079,7 @@ function showPage(page) {
   if (page === 'users')    renderUsersPage();
   if (page === 'vehicles') renderVehiclesPage();
   if (page === 'staff')    renderStaffPage();
+  if (page === 'help')     {} // static content
 }
 
 // ================================================================
@@ -1676,7 +1906,7 @@ async function startRouteOptimize() {
   setProgress('施設の住所を検索中...', 0);
   const facilityCoords = await geocodeAddress(facilityAddr);
   if (!facilityCoords) {
-    alert('施設の住所が見つかりませんでした。住所を確認してください。');
+    alert('施設の住所が見つかりませんでした。\n\n例）大阪府大阪市○○区○○町1-2-3\n・都道府県から入力してください\n・番地は半角数字推奨');
     document.getElementById('route-setup').style.display    = 'block';
     document.getElementById('route-progress').style.display = 'none';
     return;
@@ -1690,7 +1920,7 @@ async function startRouteOptimize() {
     setProgress(`${esc(user?.name || '')} の住所を検索中... (${i+1}/${items.length})`,
       Math.round((i + 1) / total * 80));
     const coords = user?.address ? await geocodeAddress(user.address) : null;
-    if (i < items.length - 1) await sleep(1000); // Nominatim rate limit
+    if (i < items.length - 1) await sleep(200);
     points.push({ item, user, coords });
   }
 
@@ -1772,23 +2002,42 @@ function applyRoute() {
   renderScheduleList();
 }
 
-// ── Nominatim ジオコーディング ──
+// ── ジオコーディング（国土地理院 → Nominatim フォールバック）──
 async function geocodeAddress(address) {
   if (!address?.trim()) return null;
   if (!data.geocache) data.geocache = {};
   if (data.geocache[address]) return data.geocache[address];
+
+  // 第1候補：国土地理院 API（日本語住所に最適・無料）
+  try {
+    const url = 'https://msearch.gsi.go.jp/address-search/AddressSearch?q=' + encodeURIComponent(address);
+    const res  = await fetch(url);
+    const json = await res.json();
+    if (Array.isArray(json) && json.length) {
+      const [lng, lat] = json[0].geometry.coordinates;
+      const coords = { lat, lng };
+      data.geocache[address] = coords;
+      save();
+      return coords;
+    }
+  } catch {}
+
+  // 第2候補：Nominatim（フォールバック）
   try {
     const url = 'https://nominatim.openstreetmap.org/search?q='
       + encodeURIComponent(address)
       + '&format=json&limit=1&countrycodes=jp';
-    const res = await fetch(url, { headers: { 'User-Agent': 'DayServiceSougeiApp/1.0' } });
+    const res  = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
     const json = await res.json();
-    if (!json.length) return null;
-    const coords = { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
-    data.geocache[address] = coords;
-    save();
-    return coords;
-  } catch { return null; }
+    if (Array.isArray(json) && json.length) {
+      const coords = { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
+      data.geocache[address] = coords;
+      save();
+      return coords;
+    }
+  } catch {}
+
+  return null;
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1844,6 +2093,13 @@ function calcScheduleTimes(facilityCoords, route, departTime, totalMins) {
 function timeToMinutes(t) {
   const [h, m] = (t || '00:00').split(':').map(Number);
   return h * 60 + m;
+}
+
+function toggleQa(questionEl) {
+  const answer = questionEl.nextElementSibling;
+  const toggle = questionEl.querySelector('.qa-toggle');
+  const open = answer.classList.toggle('open');
+  toggle.textContent = open ? '▲' : '▼';
 }
 
 function minutesToTime(m) {
