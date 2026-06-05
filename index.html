@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>デイサービス 送迎表</title>
+  <title>生活介護 送迎表</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -589,7 +589,7 @@
 <!-- ══ Header ══ -->
 <header class="app-header">
   <div>
-    <h1>デイサービス 送迎表</h1>
+    <h1>生活介護 送迎表</h1>
     <div class="subtitle" id="header-date"></div>
   </div>
   <button class="header-btn" onclick="window.print()">🖨 印刷</button>
@@ -640,11 +640,11 @@
   </div>
 </div>
 
-<!-- ══ スタッフ ══ -->
+<!-- ══ 職員 ══ -->
 <div class="page" id="page-staff">
   <div class="section-card" style="margin-top:14px;">
     <div class="section-header">
-      <span class="section-title">スタッフ一覧</span>
+      <span class="section-title">職員一覧</span>
       <button class="add-btn" onclick="openStaffModal()">＋ 追加</button>
     </div>
     <div id="staff-list"></div>
@@ -667,8 +667,8 @@
       <div class="qa-answer">
         以下の順番で設定してください。
         <ul>
-          <li>① <span class="tag">スタッフ</span>タブでドライバー・スタッフを登録</li>
-          <li>② <span class="tag">車両</span>タブで車両を追加し、担当スタッフを設定</li>
+          <li>① <span class="tag">職員</span>タブでドライバー・職員を登録</li>
+          <li>② <span class="tag">車両</span>タブで車両を追加し、担当職員を設定</li>
           <li>③ <span class="tag">利用者</span>タブで利用者を登録（住所・時刻も入力しておくと便利）</li>
           <li>④ <span class="tag">送迎表</span>タブで日付を選び、利用者を追加して完成</li>
         </ul>
@@ -734,13 +734,13 @@
 
     <div class="qa-item">
       <div class="qa-question" onclick="toggleQa(this)">
-        <span class="qa-question-text">スタッフの欠勤を登録したい</span>
+        <span class="qa-question-text">職員の欠勤を登録したい</span>
         <span class="qa-toggle">▼</span>
       </div>
       <div class="qa-answer">
-        送迎表の上部にある <strong>「👥 出欠」</strong> をタップするとスタッフ一覧が開きます。<br>
-        該当スタッフの <strong>「出勤」ボタン</strong> をタップすると「🌙 休み」に切り替わります。<br><br>
-        ドライバーや同乗スタッフが欠勤の場合、車両タブに <strong>⚠️ 欠勤</strong> の警告が表示されます。
+        送迎表の上部にある <strong>「👥 出欠」</strong> をタップすると職員一覧が開きます。<br>
+        該当職員の <strong>「出勤」ボタン</strong> をタップすると「🌙 休み」に切り替わります。<br><br>
+        ドライバーや同乗職員が欠勤の場合、車両タブに <strong>⚠️ 欠勤</strong> の警告が表示されます。
       </div>
     </div>
 
@@ -830,7 +830,7 @@
     <span class="nav-icon">🚗</span>車両
   </button>
   <button class="nav-item" id="nav-staff" onclick="showPage('staff')">
-    <span class="nav-icon">👤</span>スタッフ
+    <span class="nav-icon">👤</span>職員
   </button>
   <button class="nav-item" id="nav-help" onclick="showPage('help')">
     <span class="nav-icon">❓</span>ヘルプ
@@ -898,7 +898,7 @@
       <input type="hidden" id="vehicle-color" value="#2980b9">
     </div>
     <div id="staff-notice" style="display:none;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:8px 12px;font-size:0.8rem;color:#7a6000;margin-bottom:10px;">
-      👤 スタッフが未登録です。下の欄に名前を入力するか、先に「スタッフ」タブで登録してください。
+      👤 職員が未登録です。下の欄に名前を入力するか、先に「職員」タブで登録してください。
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -907,9 +907,19 @@
         <input type="text" id="vehicle-driver-new" placeholder="新規：名前を入力" style="margin-top:6px;width:100%;padding:8px 10px;border:1px dashed #aaa;border-radius:7px;font-size:0.85rem;display:none;">
       </div>
       <div class="form-group">
-        <label>同乗スタッフ</label>
+        <label>同乗職員</label>
         <select id="vehicle-staff"><option value="">未設定</option></select>
         <input type="text" id="vehicle-staff-new" placeholder="新規：名前を入力" style="margin-top:6px;width:100%;padding:8px 10px;border:1px dashed #aaa;border-radius:7px;font-size:0.85rem;display:none;">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>♿ 車椅子　定員（台）</label>
+        <input type="number" id="vehicle-wheelchair-cap" min="0" max="99" placeholder="0" style="text-align:center;">
+      </div>
+      <div class="form-group">
+        <label>🚶 独歩　定員（人）</label>
+        <input type="number" id="vehicle-ambulatory-cap" min="0" max="99" placeholder="0" style="text-align:center;">
       </div>
     </div>
     <div class="form-group">
@@ -923,10 +933,10 @@
   </div>
 </div>
 
-<!-- ══ Modal: スタッフ ══ -->
+<!-- ══ Modal: 職員 ══ -->
 <div class="modal-overlay" id="modal-staff">
   <div class="modal">
-    <div class="modal-title" id="modal-staff-title">スタッフを追加</div>
+    <div class="modal-title" id="modal-staff-title">職員を追加</div>
     <input type="hidden" id="edit-staff-id">
     <div class="form-group">
       <label>氏名 <span style="color:red">*</span></label>
@@ -1215,7 +1225,7 @@ function renderAttendanceBar() {
     const roleVeh  = data.vehicles.find(v => v.driverId === s.id || v.staffId === s.id);
     const roleLabel = isDriver
       ? `🚗 ドライバー（${esc(roleVeh?.name || '')}）`
-      : isStaff ? `👤 スタッフ（${esc(roleVeh?.name || '')}）` : '未配車';
+      : isStaff ? `👤 職員（${esc(roleVeh?.name || '')}）` : '未配車';
     const strikeStyle = (st === 'absent' || st === 'dispatch') ? 'text-decoration:line-through;color:#aaa;' : '';
     return `
       <div class="attendance-row">
@@ -1326,9 +1336,24 @@ function renderVehicleInfoBar() {
     ? `<span>${esc(staff.name)}</span>${absWarnHtml(v.staffId)}`
     : '<span style="color:#ccc;">未設定</span>';
 
+  // 現在の乗車人数を集計
+  const items = getItems();
+  const wcCount  = items.filter(it => data.users.find(u => u.id === it.userId)?.wheelchair).length;
+  const ambCount = items.filter(it => !data.users.find(u => u.id === it.userId)?.wheelchair).length;
+  const wcCap    = v.wheelchairCap;
+  const ambCap   = v.ambulatoryCap;
+  const wcOver   = wcCap != null && wcCount > wcCap;
+  const ambOver  = ambCap != null && ambCount > ambCap;
+  const capHtml  = (wcCap != null || ambCap != null) ? `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      ${wcCap  != null ? `<span style="background:${wcOver ?'#fde8e8':'#eaf4fd'};color:${wcOver?'#c0392b':'#1a5276'};border-radius:6px;padding:2px 9px;font-size:0.78rem;font-weight:700;">♿ ${wcCount}/${wcCap}台${wcOver?' ⚠️':''}</span>` : ''}
+      ${ambCap != null ? `<span style="background:${ambOver?'#fde8e8':'#eaf7ef'};color:${ambOver?'#c0392b':'#1a8c4e'};border-radius:6px;padding:2px 9px;font-size:0.78rem;font-weight:700;">🚶 ${ambCount}/${ambCap}人${ambOver?' ⚠️':''}</span>` : ''}
+    </div>` : '';
+
   bar.innerHTML = `
     <div class="role"><span class="role-label">ドライバー</span>&nbsp;${driverHtml}</div>
-    <div class="role"><span class="role-label">スタッフ</span>&nbsp;${staffHtml}</div>
+    <div class="role"><span class="role-label">同乗職員</span>&nbsp;${staffHtml}</div>
+    ${capHtml}
     ${v.note ? `<div style="color:#aaa;font-size:0.72rem;">${esc(v.note)}</div>` : ''}`;
 }
 
@@ -1707,10 +1732,15 @@ function renderVehiclesPage() {
             <div class="vehicle-role-name ${driver?'':'empty'}">${driver ? esc(driver.name) : '未設定'}</div>
           </div>
           <div class="vehicle-role-item">
-            <div class="vehicle-role-label">👤 同乗スタッフ</div>
+            <div class="vehicle-role-label">👤 同乗職員</div>
             <div class="vehicle-role-name ${staff?'':'empty'}">${staff ? esc(staff.name) : '未設定'}</div>
           </div>
         </div>
+        ${(v.wheelchairCap != null || v.ambulatoryCap != null) ? `
+        <div style="display:flex;gap:10px;padding:0 14px 10px;">
+          ${v.wheelchairCap != null ? `<span style="background:#eaf4fd;color:#1a5276;border-radius:6px;padding:3px 10px;font-size:0.78rem;font-weight:700;">♿ ${v.wheelchairCap}台</span>` : ''}
+          ${v.ambulatoryCap != null ? `<span style="background:#eaf7ef;color:#1a8c4e;border-radius:6px;padding:3px 10px;font-size:0.78rem;font-weight:700;">🚶 ${v.ambulatoryCap}人</span>` : ''}
+        </div>` : ''}
         ${v.note ? `<div style="padding:0 14px 10px;font-size:0.75rem;color:#aaa;">${esc(v.note)}</div>` : ''}
       </div>`;
   }).join('');
@@ -1760,6 +1790,8 @@ function openVehicleModal(vehicleId) {
     document.getElementById('vehicle-driver').value  = v.driverId || '';
     document.getElementById('vehicle-staff').value   = v.staffId  || '';
     document.getElementById('vehicle-note').value    = v.note     || '';
+    document.getElementById('vehicle-wheelchair-cap').value  = v.wheelchairCap ?? '';
+    document.getElementById('vehicle-ambulatory-cap').value  = v.ambulatoryCap ?? '';
   } else {
     document.getElementById('modal-vehicle-title').textContent = '車両を追加';
     document.getElementById('edit-vehicle-id').value = '';
@@ -1768,6 +1800,8 @@ function openVehicleModal(vehicleId) {
     document.getElementById('vehicle-driver').value  = '';
     document.getElementById('vehicle-staff').value   = '';
     document.getElementById('vehicle-note').value    = '';
+    document.getElementById('vehicle-wheelchair-cap').value  = '';
+    document.getElementById('vehicle-ambulatory-cap').value  = '';
   }
   openModal('modal-vehicle');
 }
@@ -1795,12 +1829,16 @@ function saveVehicle() {
     return document.getElementById(selectId).value || '';
   }
 
+  const wcVal  = parseInt(document.getElementById('vehicle-wheelchair-cap').value);
+  const ambVal = parseInt(document.getElementById('vehicle-ambulatory-cap').value);
   const v = {
     id: vehicleId || uid(), name,
-    color:    document.getElementById('vehicle-color').value  || COLORS[0],
-    driverId: resolveStaff('vehicle-driver', 'vehicle-driver-new'),
-    staffId:  resolveStaff('vehicle-staff',  'vehicle-staff-new'),
-    note:     document.getElementById('vehicle-note').value.trim(),
+    color:          document.getElementById('vehicle-color').value  || COLORS[0],
+    driverId:       resolveStaff('vehicle-driver', 'vehicle-driver-new'),
+    staffId:        resolveStaff('vehicle-staff',  'vehicle-staff-new'),
+    note:           document.getElementById('vehicle-note').value.trim(),
+    wheelchairCap:  isNaN(wcVal)  ? null : wcVal,
+    ambulatoryCap:  isNaN(ambVal) ? null : ambVal,
   };
   if (vehicleId) {
     const i = data.vehicles.findIndex(x => x.id === vehicleId);
@@ -1822,7 +1860,7 @@ function deleteVehicle(vehicleId) {
 function renderStaffPage() {
   const list = document.getElementById('staff-list');
   if (data.staff.length === 0) {
-    list.innerHTML = `<div class="empty-state" style="padding:22px;"><p>スタッフが登録されていません</p></div>`;
+    list.innerHTML = `<div class="empty-state" style="padding:22px;"><p>職員が登録されていません</p></div>`;
     return;
   }
   list.innerHTML = data.staff.map(s => {
@@ -1891,7 +1929,7 @@ function openStaffModal(staffId) {
   if (staffId) {
     const s = data.staff.find(s => s.id === staffId);
     if (!s) return;
-    document.getElementById('modal-staff-title').textContent = 'スタッフを編集';
+    document.getElementById('modal-staff-title').textContent = '職員を編集';
     document.getElementById('edit-staff-id').value = staffId;
     document.getElementById('staff-name').value    = s.name;
     const canDrive = !!s.canDrive;
@@ -1901,7 +1939,7 @@ function openStaffModal(staffId) {
     document.getElementById('staff-drive-all').checked = !!s.driveAll;
     if (canDrive) renderDriveVehicleCheckboxes(s.driveVehicles || []);
   } else {
-    document.getElementById('modal-staff-title').textContent = 'スタッフを追加';
+    document.getElementById('modal-staff-title').textContent = '職員を追加';
     document.getElementById('edit-staff-id').value = '';
     document.getElementById('staff-name').value    = '';
     document.getElementById('staff-can-drive-yes').checked = false;
@@ -1930,7 +1968,7 @@ function saveStaff() {
 }
 
 function deleteStaff(staffId) {
-  if (!confirm('このスタッフを削除しますか？\n車両に設定されている場合は解除されます。')) return;
+  if (!confirm('この職員を削除しますか？\n車両に設定されている場合は解除されます。')) return;
   data.staff = data.staff.filter(s => s.id !== staffId);
   data.vehicles.forEach(v => {
     if (v.driverId === staffId) v.driverId = '';
