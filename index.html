@@ -156,8 +156,10 @@
       transition: all 0.15s;
       white-space: nowrap;
     }
-    .absence-btn.present { background: #eaf7ef; color: #1a8c4e; }
-    .absence-btn.absent  { background: #fde8e8; color: var(--danger); }
+    .absence-btn.present  { background: #eaf7ef; color: #1a8c4e; }
+    .absence-btn.absent   { background: #fde8e8; color: var(--danger); }
+    .absence-btn.dispatch { background: #fef3e2; color: #e67e22; }
+    .absence-btn.late     { background: #fef9e7; color: #d4a017; }
 
     /* ── Vehicle tabs ── */
     .vehicle-tabs {
@@ -930,6 +932,29 @@
       <label>氏名 <span style="color:red">*</span></label>
       <input type="text" id="staff-name" placeholder="田中 太郎">
     </div>
+    <div class="form-group">
+      <label>運転</label>
+      <div style="display:flex;gap:16px;margin-top:5px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;font-size:0.88rem;">
+          <input type="radio" name="staff-can-drive" id="staff-can-drive-yes" value="yes" onchange="onDriveRadioChange()">
+          🚗 運転できる
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;font-size:0.88rem;">
+          <input type="radio" name="staff-can-drive" id="staff-can-drive-no" value="no" checked onchange="onDriveRadioChange()">
+          🚶 運転できない
+        </label>
+      </div>
+    </div>
+    <div id="drive-vehicles-section" style="display:none;">
+      <div class="form-group">
+        <label>運転できる車両</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;padding:8px 10px;background:#f0f4f8;border-radius:7px;">
+          <input type="checkbox" id="staff-drive-all" style="width:17px;height:17px;accent-color:var(--primary);" onchange="onDriveAllChange()">
+          <span style="font-size:0.85rem;font-weight:700;color:var(--primary);">全ての車両を運転できる</span>
+        </label>
+        <div id="staff-drive-vehicles"></div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('modal-staff')">キャンセル</button>
       <button class="btn-primary" onclick="saveStaff()">保存</button>
@@ -1126,10 +1151,20 @@ function ensureItems() {
   return data.schedules[k];
 }
 
+const ATTENDANCE_CYCLE = { present: 'absent', absent: 'dispatch', dispatch: 'late', late: 'present' };
+const ATTENDANCE_LABEL = { present: '　出勤　', absent: '🌙 休み', dispatch: '📤 派遣', late: '⏰ 遅刻/早退' };
+
+function getAttendanceStatus(staffId) {
+  if (!staffId) return 'present';
+  const d = data.absences[curDate];
+  if (!d) return 'present';
+  if (Array.isArray(d)) return d.includes(staffId) ? 'absent' : 'present'; // 旧データ互換
+  return d[staffId] || 'present';
+}
+
 function isAbsent(staffId) {
-  if (!staffId) return false;
-  const abs = data.absences[curDate] || [];
-  return abs.includes(staffId);
+  const s = getAttendanceStatus(staffId);
+  return s === 'absent' || s === 'dispatch';
 }
 
 function renderSchedulePage() {
@@ -1155,53 +1190,61 @@ function renderAttendanceBar() {
   }
   document.getElementById('attendance-bar').style.display = '';
 
-  const abs       = data.absences[curDate] || [];
   const driverIds = new Set(data.vehicles.map(v => v.driverId).filter(Boolean));
   const staffIds  = new Set(data.vehicles.map(v => v.staffId).filter(Boolean));
-  const absentCount = data.staff.filter(s => abs.includes(s.id)).length;
+  const nonPresent = data.staff.filter(s => getAttendanceStatus(s.id) !== 'present');
 
-  // サマリー（ヘッダー）
+  // サマリー
   const summaryEl = document.getElementById('attendance-summary');
-  if (absentCount === 0) {
+  if (nonPresent.length === 0) {
     summaryEl.innerHTML = '👥 出欠　<span style="color:#1a8c4e;font-size:0.78rem;">全員出勤</span>';
   } else {
-    const names = data.staff.filter(s => abs.includes(s.id)).map(s => esc(s.name)).join('・');
-    summaryEl.innerHTML = `👥 出欠　<span style="color:var(--danger);font-size:0.78rem;">🌙 休み：${names}</span>`;
+    const parts = nonPresent.map(s => {
+      const st = getAttendanceStatus(s.id);
+      const icon = st === 'absent' ? '🌙' : st === 'dispatch' ? '📤' : '⏰';
+      return `${icon}${esc(s.name)}`;
+    }).join('・');
+    summaryEl.innerHTML = `👥 出欠　<span style="color:var(--danger);font-size:0.78rem;">${parts}</span>`;
   }
 
   // リスト
   document.getElementById('attendance-list').innerHTML = data.staff.map(s => {
-    const absent   = abs.includes(s.id);
+    const st       = getAttendanceStatus(s.id);
     const isDriver = driverIds.has(s.id);
     const isStaff  = staffIds.has(s.id);
     const roleVeh  = data.vehicles.find(v => v.driverId === s.id || v.staffId === s.id);
     const roleLabel = isDriver
       ? `🚗 ドライバー（${esc(roleVeh?.name || '')}）`
-      : isStaff
-        ? `👤 スタッフ（${esc(roleVeh?.name || '')}）`
-        : '未配車';
+      : isStaff ? `👤 スタッフ（${esc(roleVeh?.name || '')}）` : '未配車';
+    const strikeStyle = (st === 'absent' || st === 'dispatch') ? 'text-decoration:line-through;color:#aaa;' : '';
     return `
       <div class="attendance-row">
         <div>
-          <div class="attendance-name" style="${absent ? 'text-decoration:line-through;color:#aaa;' : ''}">${esc(s.name)}</div>
+          <div class="attendance-name" style="${strikeStyle}">${esc(s.name)}</div>
           <div class="attendance-role">${roleLabel}</div>
         </div>
-        <button class="absence-btn ${absent ? 'absent' : 'present'}" onclick="toggleAbsence('${s.id}')">
-          ${absent ? '🌙 休み' : '　出勤　'}
+        <button class="absence-btn ${st}" onclick="cycleAttendance('${s.id}')">
+          ${ATTENDANCE_LABEL[st]}
         </button>
       </div>`;
   }).join('');
 
-  // リストの開閉状態を維持
   document.getElementById('attendance-list').classList.toggle('open', attendanceOpen);
   document.getElementById('attendance-toggle-icon').textContent = attendanceOpen ? '▲' : '▼';
 }
 
-function toggleAbsence(staffId) {
-  if (!data.absences[curDate]) data.absences[curDate] = [];
-  const abs = data.absences[curDate];
-  const idx = abs.indexOf(staffId);
-  if (idx >= 0) abs.splice(idx, 1); else abs.push(staffId);
+function cycleAttendance(staffId) {
+  const cur  = getAttendanceStatus(staffId);
+  const next = ATTENDANCE_CYCLE[cur];
+  // 旧配列形式を移行
+  if (Array.isArray(data.absences[curDate])) {
+    const old = data.absences[curDate];
+    data.absences[curDate] = {};
+    old.forEach(id => { data.absences[curDate][id] = 'absent'; });
+  }
+  if (!data.absences[curDate]) data.absences[curDate] = {};
+  if (next === 'present') delete data.absences[curDate][staffId];
+  else data.absences[curDate][staffId] = next;
   save();
   renderAttendanceBar();
   renderVehicleInfoBar();
@@ -1225,10 +1268,15 @@ function renderVehicleTabs() {
     const bg           = active ? '#ececec' : '#f9f9f9';
     const fontWeight   = active ? '700' : '400';
 
+    const driverSt = v.driverId ? getAttendanceStatus(v.driverId) : 'present';
     let driverLine = '';
     if (driver) {
-      driverLine = driverAbsent
-        ? `<div style="font-size:0.62rem;font-weight:600;margin-top:1px;color:#e57373;">⚠️ ${esc(driver.name)} 欠勤</div>`
+      const warn = driverSt === 'absent'   ? `⚠️ ${esc(driver.name)} 欠勤`
+                 : driverSt === 'dispatch' ? `📤 ${esc(driver.name)} 派遣`
+                 : driverSt === 'late'     ? `⏰ ${esc(driver.name)} 遅刻/早退`
+                 : '';
+      driverLine = warn
+        ? `<div style="font-size:0.62rem;font-weight:600;margin-top:1px;color:#e57373;">${warn}</div>`
         : `<div style="font-size:0.62rem;margin-top:1px;color:#bbb;">🚗 ${esc(driver.name)}</div>`;
     } else {
       driverLine = `<div style="font-size:0.62rem;margin-top:1px;color:#ccc;">Dr: 未設定</div>`;
@@ -1264,11 +1312,18 @@ function renderVehicleInfoBar() {
   const driverAbsent = isAbsent(v.driverId);
   const staffAbsent  = isAbsent(v.staffId);
 
+  const absWarnHtml = (id) => {
+    const st = getAttendanceStatus(id);
+    if (st === 'absent')   return '<span class="absent-warn">⚠️ 欠勤</span>';
+    if (st === 'dispatch') return '<span style="color:#e67e22;font-size:0.72rem;">📤 派遣中</span>';
+    if (st === 'late')     return '<span style="color:#d4a017;font-size:0.72rem;">⏰ 遅刻/早退</span>';
+    return '';
+  };
   const driverHtml = driver
-    ? `<span>${esc(driver.name)}</span>${driverAbsent ? '<span class="absent-warn">⚠️ 欠勤</span>' : ''}`
+    ? `<span>${esc(driver.name)}</span>${absWarnHtml(v.driverId)}`
     : '<span style="color:#ccc;">未設定</span>';
   const staffHtml = staff
-    ? `<span>${esc(staff.name)}</span>${staffAbsent ? '<span class="absent-warn">⚠️ 欠勤</span>' : ''}`
+    ? `<span>${esc(staff.name)}</span>${absWarnHtml(v.staffId)}`
     : '<span style="color:#ccc;">未設定</span>';
 
   bar.innerHTML = `
@@ -1776,10 +1831,29 @@ function renderStaffPage() {
       const role = v.driverId === s.id ? 'Dr' : 'St';
       return `<span style="color:${v.color};">${role}:${esc(v.name)}</span>`;
     }).join('　');
+
+    let driveInfo;
+    if (s.canDrive) {
+      if (s.driveAll || !s.driveVehicles?.length) {
+        driveInfo = '<span style="color:#1a8c4e;">🚗 全車両運転可</span>';
+      } else {
+        const names = s.driveVehicles.map(vid => {
+          const v = data.vehicles.find(x => x.id === vid);
+          return v ? `<span style="color:${v.color};">●${esc(v.name)}</span>` : '';
+        }).filter(Boolean).join(' ');
+        driveInfo = `<span style="color:#1a8c4e;">🚗 運転可：</span>${names}`;
+      }
+    } else {
+      driveInfo = '<span style="color:#aaa;">🚶 運転不可</span>';
+    }
+
     return `<div class="list-item">
       <div class="list-item-info">
         <div class="list-item-name">👤 ${esc(s.name)}</div>
-        ${roles ? `<div class="list-item-sub">${roles}</div>` : ''}
+        <div class="list-item-sub" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px;">
+          <span>${driveInfo}</span>
+          ${roles ? `<span>${roles}</span>` : ''}
+        </div>
       </div>
       <div class="list-item-actions">
         <button class="btn-sm btn-edit"   onclick="openStaffModal('${s.id}')">編集</button>
@@ -1789,6 +1863,30 @@ function renderStaffPage() {
   }).join('');
 }
 
+function onDriveRadioChange() {
+  const canDrive = document.getElementById('staff-can-drive-yes').checked;
+  document.getElementById('drive-vehicles-section').style.display = canDrive ? 'block' : 'none';
+  if (canDrive) renderDriveVehicleCheckboxes();
+}
+
+function onDriveAllChange() {
+  renderDriveVehicleCheckboxes();
+}
+
+function renderDriveVehicleCheckboxes(selectedIds) {
+  const driveAll = document.getElementById('staff-drive-all').checked;
+  const container = document.getElementById('staff-drive-vehicles');
+  if (driveAll || data.vehicles.length === 0) { container.innerHTML = ''; return; }
+  container.innerHTML = data.vehicles.map(v =>
+    `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 0;">
+      <input type="checkbox" class="drive-vehicle-cb" value="${v.id}"
+             style="width:17px;height:17px;accent-color:${v.color};"
+             ${selectedIds?.includes(v.id) ? 'checked' : ''}>
+      <span style="color:${v.color};font-weight:600;">● ${esc(v.name)}</span>
+    </label>`
+  ).join('');
+}
+
 function openStaffModal(staffId) {
   if (staffId) {
     const s = data.staff.find(s => s.id === staffId);
@@ -1796,10 +1894,20 @@ function openStaffModal(staffId) {
     document.getElementById('modal-staff-title').textContent = 'スタッフを編集';
     document.getElementById('edit-staff-id').value = staffId;
     document.getElementById('staff-name').value    = s.name;
+    const canDrive = !!s.canDrive;
+    document.getElementById('staff-can-drive-yes').checked = canDrive;
+    document.getElementById('staff-can-drive-no').checked  = !canDrive;
+    document.getElementById('drive-vehicles-section').style.display = canDrive ? 'block' : 'none';
+    document.getElementById('staff-drive-all').checked = !!s.driveAll;
+    if (canDrive) renderDriveVehicleCheckboxes(s.driveVehicles || []);
   } else {
     document.getElementById('modal-staff-title').textContent = 'スタッフを追加';
     document.getElementById('edit-staff-id').value = '';
     document.getElementById('staff-name').value    = '';
+    document.getElementById('staff-can-drive-yes').checked = false;
+    document.getElementById('staff-can-drive-no').checked  = true;
+    document.getElementById('staff-drive-all').checked     = false;
+    document.getElementById('drive-vehicles-section').style.display = 'none';
   }
   openModal('modal-staff');
 }
@@ -1807,8 +1915,13 @@ function openStaffModal(staffId) {
 function saveStaff() {
   const name = document.getElementById('staff-name').value.trim();
   if (!name) { alert('氏名を入力してください'); return; }
-  const staffId = document.getElementById('edit-staff-id').value;
-  const s = { id: staffId || uid(), name };
+  const staffId  = document.getElementById('edit-staff-id').value;
+  const canDrive = document.getElementById('staff-can-drive-yes').checked;
+  const driveAll = canDrive && document.getElementById('staff-drive-all').checked;
+  const driveVehicles = (canDrive && !driveAll)
+    ? Array.from(document.querySelectorAll('.drive-vehicle-cb:checked')).map(cb => cb.value)
+    : [];
+  const s = { id: staffId || uid(), name, canDrive, driveAll, driveVehicles };
   if (staffId) {
     const i = data.staff.findIndex(x => x.id === staffId);
     if (i >= 0) data.staff[i] = s; else data.staff.push(s);
